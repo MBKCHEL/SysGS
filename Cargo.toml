@@ -5,3 +5,4 @@ edition = "2024"
 
 [dependencies]
 git2 = "0.21.0"
+tokei = "14.0.0"
