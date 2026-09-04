@@ -13,7 +13,7 @@ fn main() -> Result<(), git2::Error> {
     let head = repo.head()?;
     let head_tree = repo.head()?.peel_to_tree()?;
     let commit = head.peel_to_commit()?;
-
+    let summary = commit.summary()?.unwrap_or("default");
     let id = commit.id();
     let id = format!("{:.7}", id);
 
@@ -21,6 +21,7 @@ fn main() -> Result<(), git2::Error> {
 
     let mut revwalk = repo.revwalk()?;
     revwalk.push_head()?;
+    
 
     let mut languages = Languages::new();
     let config = Config::default();
@@ -30,11 +31,14 @@ fn main() -> Result<(), git2::Error> {
 
     let mut author_counts: HashMap<String, usize> = HashMap::new();
 
+    let mut total_commits = 0;
+
     for oid in revwalk.flatten() {
+        total_commits += 1;
         if let Ok(c) = repo.find_commit(oid) {
             let author = c.author();
             if author.name().is_ok() {
-                let name = author.name().unwrap().to_string();
+                let name = author.name().expect("ERROR!!!!").to_string();
                 *author_counts.entry(name).or_insert(0) += 1;
             }
         }
@@ -81,11 +85,13 @@ fn main() -> Result<(), git2::Error> {
         top_names.join(", ")
     };
 
-    println!("Authors: {}", authors_str);
     println!("Head: {} ({})", id, branch);
+    println!("Authors: {}", authors_str);
     println!("Files: {}", total_files);
     println!("Lines of code: {}", total_code_lines);
-    println!("Last commit: {}", commit.message().unwrap_or(""));
+    println!("Total commits: {}", total_commits);
+    println!("Last commit: {}", summary);
+
 
     Ok(())
 }
