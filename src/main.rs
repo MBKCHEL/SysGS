@@ -47,20 +47,22 @@ fn main() -> Result<(), git2::Error> {
     let mut language_stats: HashMap<LanguageType, CodeStats> = HashMap::new();
 
     head_tree.walk(TreeWalkMode::PreOrder, |root, entry| {
-        if let Some(ObjectType::Blob) = entry.kind() {
-            if let (Some(name), Ok(object)) = (entry.name().ok(), entry.to_object(&repo)) {
-                if let Some(blob) = object.as_blob() {
-                    if !blob.is_binary() {
-                        if let Some(lang_type) = LanguageType::from_path(name, &config) {
-                            let mut stats = lang_type.parse_from_slice(blob.content(), &config);
+        if entry.kind() == Some(ObjectType::Blob) {
+            if let Ok(name) = std::str::from_utf8(entry.name_bytes()) {
+                let full_path = std::path::Path::new(root).join(name);
+                if let Some(lang_type) = LanguageType::from_path(&full_path, &config) {
+                    if let Ok(object) = entry.to_object(&repo) {
+                        if let Some(blob) = object.as_blob() {
+                            if !blob.is_binary() {
+                                let stats = lang_type.parse_from_slice(blob.content(), &config);
 
-                            total_files += 1;
-                            total_code_lines += stats.code;
-
-                            let lang_stats = language_stats
+                                total_files += 1;
+                                total_code_lines += stats.code;
+                                let lang_stats = language_stats
                                 .entry(lang_type)
                                 .or_insert_with(CodeStats::new);
-                            *lang_stats += stats;
+                                *lang_stats += stats;
+                            }
                         }
                     }
                 }
@@ -89,7 +91,28 @@ fn main() -> Result<(), git2::Error> {
     println!("Authors: {}", authors_str);
     println!("Files: {}", total_files);
     println!("Lines of code: {}", total_code_lines);
-    println!("Total commits: {}", total_commits);
+    print!("Languages: ");
+    let mut first = true;
+    for lang in language_stats.keys() {
+        
+        match lang {
+            
+            tokei::LanguageType::Toml 
+            | tokei::LanguageType::Xml 
+            | tokei::LanguageType::Json
+            | tokei::LanguageType::Markdown
+            | tokei::LanguageType::Yaml => continue,
+
+            _ => {
+                if !first {
+                    print!(", ");
+                }
+                print!("{:?}", lang);
+                first = false;
+            }
+        }
+    }
+    println!("\nTotal commits: {}", total_commits);
     println!("Last commit: {}", summary);
 
 
