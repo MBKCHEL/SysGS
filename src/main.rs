@@ -87,30 +87,55 @@ fn main() -> Result<(), git2::Error> {
         top_names.join(", ")
     };
 
+    let total_lines: usize = language_stats
+        .iter()
+        .filter(|(lang, _)| {
+            !matches!(
+                lang,
+                tokei::LanguageType::Toml
+                    | tokei::LanguageType::Xml
+                    | tokei::LanguageType::Json
+                    | tokei::LanguageType::Yaml
+                    | tokei::LanguageType::Markdown
+            )
+        })
+        .map(|(_, stats)| stats.code)
+        .sum();
+
+    let mut sorted_langs: Vec<(&tokei::LanguageType, &tokei::CodeStats)> = language_stats
+        .iter()
+        .filter(|(lang, _)| {
+            !matches!(
+                lang,
+                tokei::LanguageType::Toml
+                    | tokei::LanguageType::Xml
+                    | tokei::LanguageType::Json
+                    | tokei::LanguageType::Yaml
+                    | tokei::LanguageType::Markdown
+            )
+        })
+        .collect();
+        
+    sorted_langs.sort_by(|a, b| b.1.code.cmp(&a.1.code));
+
     println!("Head: {} ({})", id, branch);
     println!("Authors: {}", authors_str);
     println!("Files: {}", total_files);
     println!("Lines of code: {}", total_code_lines);
     print!("Languages: ");
     let mut first = true;
-    for lang in language_stats.keys() {
-        
-        match lang {
-            
-            tokei::LanguageType::Toml 
-            | tokei::LanguageType::Xml 
-            | tokei::LanguageType::Json
-            | tokei::LanguageType::Markdown
-            | tokei::LanguageType::Yaml => continue,
+    for (lang, stats) in sorted_langs {
+        let percentage = if total_lines > 0 {
+            (stats.code as f64 / total_lines as f64) * 100.0
+        } else {
+            0.0
+        };
 
-            _ => {
-                if !first {
-                    print!(", ");
-                }
-                print!("{:?}", lang);
-                first = false;
-            }
+        if !first {
+            print!(", ");
         }
+        print!("{:?} ({:.1}%)", lang, percentage);
+        first = false;
     }
     println!("\nTotal commits: {}", total_commits);
     println!("Last commit: {}", summary);
