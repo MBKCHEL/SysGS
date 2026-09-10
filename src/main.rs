@@ -2,8 +2,8 @@ mod info;
 mod logos;
 mod printer;
 
-use std::fmt::Write;
 use git2::Repository;
+use std::fmt::Write;
 
 fn main() -> Result<(), git2::Error> {
     let repo = match Repository::open_from_env() {
@@ -19,6 +19,7 @@ fn main() -> Result<(), git2::Error> {
     let mut buffer = String::with_capacity(512);
 
     let _ = writeln!(buffer, "Head: {} ({})", stats.id, stats.branch);
+    let _ = writeln!(buffer, "Repository name: {}", stats.repo_name);
     let _ = writeln!(buffer, "Authors: {}", stats.authors_str);
     let _ = writeln!(buffer, "Files: {}", stats.total_files);
     let _ = writeln!(buffer, "Lines of code: {}", stats.total_code_lines);
@@ -43,15 +44,14 @@ fn main() -> Result<(), git2::Error> {
     let _ = writeln!(buffer, "Total commits: {}", stats.total_commits);
     let _ = write!(buffer, "Last commit: {}", stats.summary);
 
-
     let top_lang = stats
         .sorted_langs
         .first()
         .map(|(lang, _)| lang.as_str())
         .unwrap_or("unknown");
 
-
     printer::render(top_lang, &buffer);
 
     Ok(())
 }
+

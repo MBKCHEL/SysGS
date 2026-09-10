@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 use git2::{ObjectType, TreeWalkMode, TreeWalkResult};
+use std::collections::HashMap;
 use tokei::{CodeStats, Config, LanguageType};
 
 pub struct RepoStats {
@@ -11,6 +11,7 @@ pub struct RepoStats {
     pub total_code_lines: usize,
     pub total_commits: i32,
     pub summary: String,
+    pub repo_name: String,
 }
 
 pub fn get_info(repo: &git2::Repository) -> Result<RepoStats, git2::Error> {
@@ -45,6 +46,17 @@ pub fn get_info(repo: &git2::Repository) -> Result<RepoStats, git2::Error> {
             }
         }
     }
+
+    get_repo_name(&repo);
+    fn get_repo_name(repo: &git2::Repository) -> Option<String> {
+        repo.path()
+            .parent()
+            .and_then(|p| p.file_name())
+            .and_then(|os_str| os_str.to_str())
+            .map(|s| s.to_string())
+    }
+
+    let repo_name = get_repo_name(repo).unwrap_or_else(|| "Unknown Repo".to_string());
 
     let mut language_stats: HashMap<LanguageType, CodeStats> = HashMap::new();
 
@@ -124,8 +136,9 @@ pub fn get_info(repo: &git2::Repository) -> Result<RepoStats, git2::Error> {
         id,
         branch: branch.to_string(),
         authors_str,
+        repo_name,
         total_files: total_files.to_string(),
-        total_code_lines: total_lines, 
+        total_code_lines: total_lines,
         total_commits,
         sorted_langs: sorted_langs
             .into_iter()
