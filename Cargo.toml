@@ -6,3 +6,5 @@ edition = "2024"
 [dependencies]
 git2 = "0.21.0"
 tokei = "14.0.0"
+strip-ansi-escapes = "0.2.1"
+colored = "2.2.0"

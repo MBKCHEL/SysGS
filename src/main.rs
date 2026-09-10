@@ -1,5 +1,9 @@
-use git2::{Repository};
 mod info;
+mod logos;
+mod printer;
+
+use std::fmt::Write;
+use git2::Repository;
 
 fn main() -> Result<(), git2::Error> {
     let repo = match Repository::open_from_env() {
@@ -12,11 +16,14 @@ fn main() -> Result<(), git2::Error> {
 
     let stats = info::get_info(&repo)?;
 
-    println!("Head: {} ({})", stats.id, stats.branch);
-    println!("Authors: {}", stats.authors_str);
-    println!("Files: {}", stats.total_files);
-    println!("Lines of code: {}", stats.total_code_lines);
-    print!("Languages: ");
+    let mut buffer = String::with_capacity(512);
+
+    let _ = writeln!(buffer, "Head: {} ({})", stats.id, stats.branch);
+    let _ = writeln!(buffer, "Authors: {}", stats.authors_str);
+    let _ = writeln!(buffer, "Files: {}", stats.total_files);
+    let _ = writeln!(buffer, "Lines of code: {}", stats.total_code_lines);
+
+    let _ = write!(buffer, "Languages: ");
     let mut first = true;
     for (lang, lang_code_lines) in &stats.sorted_langs {
         let percentage: f64 = if stats.total_code_lines > 0 {
@@ -26,13 +33,25 @@ fn main() -> Result<(), git2::Error> {
         };
 
         if !first {
-            print!(", ");
+            let _ = write!(buffer, ", ");
         }
-        print!("{} ({:.1}%)", lang, percentage);
+        let _ = write!(buffer, "{} ({:.1}%)", lang, percentage);
         first = false;
     }
-    println!("\nTotal commits: {}", stats.total_commits);
-    println!("Last commit: {}", stats.summary);
+    let _ = writeln!(buffer);
+
+    let _ = writeln!(buffer, "Total commits: {}", stats.total_commits);
+    let _ = write!(buffer, "Last commit: {}", stats.summary);
+
+
+    let top_lang = stats
+        .sorted_langs
+        .first()
+        .map(|(lang, _)| lang.as_str())
+        .unwrap_or("unknown");
+
+
+    printer::render(top_lang, &buffer);
 
     Ok(())
 }

@@ -98,6 +98,7 @@ pub fn get_info(repo: &git2::Repository) -> Result<RepoStats, git2::Error> {
                     | LanguageType::Json
                     | LanguageType::Yaml
                     | LanguageType::Markdown
+                    | LanguageType::Text
             )
         })
         .map(|(_, stats)| stats.code)
@@ -113,6 +114,7 @@ pub fn get_info(repo: &git2::Repository) -> Result<RepoStats, git2::Error> {
                     | LanguageType::Json
                     | LanguageType::Yaml
                     | LanguageType::Markdown
+                    | LanguageType::Text
             )
         })
         .collect();
@@ -123,7 +125,7 @@ pub fn get_info(repo: &git2::Repository) -> Result<RepoStats, git2::Error> {
         branch: branch.to_string(),
         authors_str,
         total_files: total_files.to_string(),
-        total_code_lines,
+        total_code_lines: total_lines, 
         total_commits,
         sorted_langs: sorted_langs
             .into_iter()
