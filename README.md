@@ -2,7 +2,7 @@
 
 > A fast and lightweight Git repository summary tool written in Rust.
 
-#Example
+# Example
 
 Python (Django): ![IMG_20260910_220129_204.jpg](https://github.com/user-attachments/assets/0a460760-6823-4d2b-a5fd-218936e218a6)
 
