@@ -54,4 +54,3 @@ fn main() -> Result<(), git2::Error> {
 
     Ok(())
 }
-
