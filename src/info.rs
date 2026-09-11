@@ -12,6 +12,7 @@ pub struct RepoStats {
     pub total_commits: i32,
     pub summary: String,
     pub repo_name: String,
+    pub age: String,
 }
 
 fn is_ignored_language(lang: &LanguageType) -> bool {
@@ -50,19 +51,51 @@ pub fn get_info(repo: &git2::Repository) -> Result<RepoStats, git2::Error> {
     let config = Config::default();
 
     let mut total_files = 0;
-
     let mut author_counts: HashMap<String, usize> = HashMap::new();
     let mut total_commits = 0;
-
+    let mut first_commit_time: Option<i64> = None;
+    
     for oid in revwalk.flatten() {
         total_commits += 1;
         if let Ok(c) = repo.find_commit(oid) {
+            first_commit_time = Some(c.time().seconds());
+
             let author = c.author();
             if let Ok(name) = author.name() {
                 *author_counts.entry(name.to_string()).or_insert(0) += 1;
             }
         }
     }
+
+    // Расчёт возраста репозитория
+    let age = if let Some(first_time) = first_commit_time {
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_secs() as i64;
+
+        let diff_sec = now - first_time;
+        let days = diff_sec / 86400;
+
+        if days < 1 {
+            "today".to_string()
+        } else if days < 30 {
+            format!("{} days", days)
+        } else if days < 365 {
+            let months = days / 30;
+            format!("{} months", months)
+        } else {
+            let years = days / 365;
+            let remaining_months = (days % 365) / 30;
+            if remaining_months > 0 {
+                format!("{} years, {} months", years, remaining_months)
+            } else {
+                format!("{} years", years)
+            }
+        }
+    } else {
+        "unknown".to_string()
+    };
 
     fn get_repo_name(repo: &git2::Repository) -> Option<String> {
         repo.path()
@@ -138,5 +171,6 @@ pub fn get_info(repo: &git2::Repository) -> Result<RepoStats, git2::Error> {
             .map(|(lang, stats)| (format!("{:?}", lang), stats.code))
             .collect(),
         summary: summary.to_string(),
+        age,
     })
 }
