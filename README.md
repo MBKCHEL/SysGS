@@ -24,7 +24,7 @@ git clone https://github.com/MBKCHEL/SysGS.git
 cd SysGS
 cargo install --path .
 ```
-## Binary (soon)
+## Binary
 
 ## Linux / MacOS / BSD
 ``` bash
