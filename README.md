@@ -28,6 +28,7 @@ cargo install --path .
 
 ## Linux / MacOS / BSD
 ``` bash
+cd Downloads # or Загрузки
 chmod +x sysgs-linux # Linux, if you have MacOS or BSD write sysgs-bsd or sysgs-macos-intel / sysgs-macos-arm64
 sudo mv sysgs-linux /usr/local/bin/sysgs # Linux, if you have MacOS or BSD write sysgs-bsd or sysgs-macos-intel / sysgs-macos-arm64
 ```
