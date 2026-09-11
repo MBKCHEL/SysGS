@@ -11,7 +11,7 @@ pub fn get_logo(lang: &str) -> (Vec<ColoredString>, usize, fn(&str) -> ColoredSt
         "c#" | "csharp" => (include_str!("../assets/csharp.txt"), |s| s.purple().bold()),
         "java"  => (include_str!("../assets/java.txt"), |s| s.red().bold()),
         "typescript" | "ts" => (include_str!("../assets/typescript.txt"), |s| s.blue().bold()),
-        "python" => (include_str!("../assets/python.txt"), |s| s.yellow().bold()),
+        "python" | "py" => (include_str!("../assets/python.txt"), |s| s.blue().bold()),
         "javascript" | "js" => (include_str!("../assets/javascript.txt"), |s| s.yellow().bold()),
         _ => (include_str!("../assets/default.txt"), |s| s.white().bold()),
     };
