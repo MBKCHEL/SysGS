@@ -4,11 +4,15 @@
 
 # Example
 
-Python (Django): ![IMG_20260910_220129_204.jpg](https://github.com/user-attachments/assets/0a460760-6823-4d2b-a5fd-218936e218a6)
+Python (pokeapi): <img width="1280" height="563" alt="image" src="https://github.com/user-attachments/assets/49d17ca6-ff62-4ccd-8e40-6163a464770e" />
 
-C (Linux): ![IMG_20260910_220125_668.jpg](https://github.com/user-attachments/assets/62c0f555-1607-413d-97b8-a65a1798905f)
+C (Linux): <img width="1280" height="603" alt="image" src="https://github.com/user-attachments/assets/9c0eb04e-f7ad-431b-81d6-792972b4cc3a" />
 
-Rust (SysPrint): ![IMG_20260910_220127_659.jpg](https://github.com/user-attachments/assets/c085b5b3-8f01-4bc7-a118-03bc93ef8286)
+Rust (SysPrint): <img width="1280" height="594" alt="image" src="https://github.com/user-attachments/assets/a890654a-5e90-4383-9952-cfcfc1e1425e" />
+
+Java (java-design-patterns): <img width="1280" height="566" alt="image" src="https://github.com/user-attachments/assets/f6d979ce-e4c9-4126-88aa-1f34649472c3" />
+
+CPP (wfrest): <img width="1280" height="569" alt="image" src="https://github.com/user-attachments/assets/8fd50de8-9bb2-49a0-89a6-7f4db5ac011d" />
 
 # ⚡ Features
 * **Fast repository analysis:** Counts total files, lines of code, commits, headers, name project, programming language in project, authors, and more.
