@@ -32,9 +32,10 @@ chmod +x sysgs-linux # Linux, if you have MacOS or BSD write sysgs-bsd or sysgs-
 sudo mv sysgs-linux /usr/local/bin/sysgs # Linux, if you have MacOS or BSD write sysgs-bsd or sysgs-macos-intel / sysgs-macos-arm64
 ```
 ## Windows 
-``` bash
-Rename-Item .\sysgs-windows.exe sysgs.exe
-Move-Item .\sysgs.exe C:\Windows\System32\
+``` powershell
+# Run PowerShell as Administrator and execute the following commands:
+Rename-Item -Path ".\sysgs-windows.exe" -NewName "sysgs.exe"
+Move-Item -Path ".\sysgs.exe" -Destination "C:\Windows\System32\"
 ```
 # Uninstall
 ## Linux / BSD / MacOS
@@ -42,7 +43,7 @@ Move-Item .\sysgs.exe C:\Windows\System32\
 sudo rm /usr/local/bin/sysgs
 ```
 ## Windows
-``` bash
+``` powershell
 Remove-Item C:\Windows\System32\sysgs.exe
 ```
 # Licence
