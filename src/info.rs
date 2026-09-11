@@ -54,7 +54,7 @@ pub fn get_info(repo: &git2::Repository) -> Result<RepoStats, git2::Error> {
     let mut author_counts: HashMap<String, usize> = HashMap::new();
     let mut total_commits = 0;
     let mut first_commit_time: Option<i64> = None;
-    
+
     for oid in revwalk.flatten() {
         total_commits += 1;
         if let Ok(c) = repo.find_commit(oid) {
@@ -66,8 +66,7 @@ pub fn get_info(repo: &git2::Repository) -> Result<RepoStats, git2::Error> {
             }
         }
     }
-
-    // Расчёт возраста репозитория
+    
     let age = if let Some(first_time) = first_commit_time {
         let now = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
