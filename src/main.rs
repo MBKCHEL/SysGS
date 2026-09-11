@@ -9,12 +9,12 @@ use std::fmt::Write;
 fn get_lang_color(lang: &str) -> Color {
     match lang.to_lowercase().as_str() {
         "rust" | "rs" => Color::White,
-        "python" | "py" => Color::BrightCyan,
+        "python" | "py" => Color::Blue,
         "c" => Color::Blue,
         "asm" | "assembly" | "assemblygas" => Color::Magenta,
         "c#" | "csharp" => Color::Magenta,
         "java" => Color::Red,
-        "cpp" | "c++" | "cheader" | "cppheader" => Color::Cyan,
+        "cpp" | "c++" | "cheader" | "cppheader" => Color::Blue,
         "javascript" | "js" => Color::BrightYellow,
         "typescript" | "ts" => Color::BrightBlue,
         _ => Color::White,
