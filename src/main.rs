@@ -2,8 +2,21 @@ mod info;
 mod logos;
 mod printer;
 
+use colored::*;
 use git2::Repository;
 use std::fmt::Write;
+
+fn get_lang_color(lang: &str) -> Color {
+    match lang.to_lowercase().as_str() {
+        "rust" | "rs" => Color::White,
+        "python" | "py" => Color::BrightCyan,
+        "c" => Color::Blue,
+        "cpp" | "c++" | "cheader" | "cppheader" => Color::Cyan,
+        "javascript" | "js" => Color::BrightYellow,
+        "typescript" | "ts" => Color::BrightBlue,
+        _ => Color::White,
+    }
+}
 
 fn main() -> Result<(), git2::Error> {
     let repo = match Repository::open_from_env() {
@@ -16,15 +29,25 @@ fn main() -> Result<(), git2::Error> {
 
     let stats = info::get_info(&repo)?;
 
+    let top_lang = stats
+        .sorted_langs
+        .first()
+        .map(|(lang, _)| lang.as_str())
+        .unwrap_or("unknown");
+
+    let theme_color = get_lang_color(top_lang);
+
+    let key = |name: &str| name.color(theme_color).bold();
+
     let mut buffer = String::with_capacity(512);
 
-    let _ = writeln!(buffer, "Head: {} ({})", stats.id, stats.branch);
-    let _ = writeln!(buffer, "Repository name: {}", stats.repo_name);
-    let _ = writeln!(buffer, "Authors: {}", stats.authors_str);
-    let _ = writeln!(buffer, "Files: {}", stats.total_files);
-    let _ = writeln!(buffer, "Lines of code: {}", stats.total_code_lines);
+    let _ = writeln!(buffer, "{}: {} ({})", key("Head"), stats.id, stats.branch);
+    let _ = writeln!(buffer, "{}: {}", key("Repository name"), stats.repo_name);
+    let _ = writeln!(buffer, "{}: {}", key("Authors"), stats.authors_str);
+    let _ = writeln!(buffer, "{}: {}", key("Files"), stats.total_files);
+    let _ = writeln!(buffer, "{}: {}", key("Lines of code"), stats.total_code_lines);
 
-    let _ = write!(buffer, "Languages: ");
+    let _ = write!(buffer, "{}: ", key("Languages"));
     let mut first = true;
     for (lang, lang_code_lines) in &stats.sorted_langs {
         let percentage: f64 = if stats.total_code_lines > 0 {
@@ -41,14 +64,8 @@ fn main() -> Result<(), git2::Error> {
     }
     let _ = writeln!(buffer);
 
-    let _ = writeln!(buffer, "Total commits: {}", stats.total_commits);
-    let _ = write!(buffer, "Last commit: {}", stats.summary);
-
-    let top_lang = stats
-        .sorted_langs
-        .first()
-        .map(|(lang, _)| lang.as_str())
-        .unwrap_or("unknown");
+    let _ = writeln!(buffer, "{}: {}", key("Total commits"), stats.total_commits);
+    let _ = write!(buffer, "{}: {}", key("Last commit"), stats.summary);
 
     printer::render(top_lang, &buffer);
 

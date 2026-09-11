@@ -14,6 +14,26 @@ pub struct RepoStats {
     pub repo_name: String,
 }
 
+fn is_ignored_language(lang: &LanguageType) -> bool {
+    matches!(
+        lang,
+        LanguageType::Toml
+            | LanguageType::Xml
+            | LanguageType::Json
+            | LanguageType::Yaml
+            | LanguageType::Markdown
+            | LanguageType::Text
+    )
+}
+
+fn normalize_language_type(lang: LanguageType) -> LanguageType {
+    match lang {
+        LanguageType::CHeader => LanguageType::C,
+        LanguageType::CppHeader => LanguageType::Cpp,
+        other => other,
+    }
+}
+
 pub fn get_info(repo: &git2::Repository) -> Result<RepoStats, git2::Error> {
     let head = repo.head()?;
     let head_tree = head.peel_to_tree()?;
@@ -30,24 +50,20 @@ pub fn get_info(repo: &git2::Repository) -> Result<RepoStats, git2::Error> {
     let config = Config::default();
 
     let mut total_files = 0;
-    let mut total_code_lines = 0;
 
     let mut author_counts: HashMap<String, usize> = HashMap::new();
-
     let mut total_commits = 0;
 
     for oid in revwalk.flatten() {
         total_commits += 1;
         if let Ok(c) = repo.find_commit(oid) {
             let author = c.author();
-            if author.name().is_ok() {
-                let name = author.name().expect("ERROR!!!!").to_string();
-                *author_counts.entry(name).or_insert(0) += 1;
+            if let Ok(name) = author.name() {
+                *author_counts.entry(name.to_string()).or_insert(0) += 1;
             }
         }
     }
 
-    get_repo_name(&repo);
     fn get_repo_name(repo: &git2::Repository) -> Option<String> {
         repo.path()
             .parent()
@@ -64,18 +80,22 @@ pub fn get_info(repo: &git2::Repository) -> Result<RepoStats, git2::Error> {
         if entry.kind() == Some(ObjectType::Blob) {
             if let Ok(name) = std::str::from_utf8(entry.name_bytes()) {
                 let full_path = std::path::Path::new(root).join(name);
-                if let Some(lang_type) = LanguageType::from_path(&full_path, &config) {
-                    if let Ok(object) = entry.to_object(&repo) {
-                        if let Some(blob) = object.as_blob() {
-                            if !blob.is_binary() {
-                                let stats = lang_type.parse_from_slice(blob.content(), &config);
+                if let Some(raw_lang_type) = LanguageType::from_path(&full_path, &config) {
+                    let lang_type = normalize_language_type(raw_lang_type);
 
-                                total_files += 1;
-                                total_code_lines += stats.code;
-                                let lang_stats = language_stats
-                                    .entry(lang_type)
-                                    .or_insert_with(CodeStats::new);
-                                *lang_stats += stats;
+                    if !is_ignored_language(&lang_type) {
+                        if let Ok(object) = entry.to_object(&repo) {
+                            if let Some(blob) = object.as_blob() {
+                                if !blob.is_binary() {
+                                    let stats = lang_type.parse_from_slice(blob.content(), &config);
+
+                                    total_files += 1;
+
+                                    let lang_stats = language_stats
+                                        .entry(lang_type)
+                                        .or_insert_with(CodeStats::new);
+                                    *lang_stats += stats;
+                                }
                             }
                         }
                     }
@@ -100,38 +120,11 @@ pub fn get_info(repo: &git2::Repository) -> Result<RepoStats, git2::Error> {
         top_names.join(", ")
     };
 
-    let total_lines: usize = language_stats
-        .iter()
-        .filter(|(lang, _)| {
-            !matches!(
-                lang,
-                LanguageType::Toml
-                    | LanguageType::Xml
-                    | LanguageType::Json
-                    | LanguageType::Yaml
-                    | LanguageType::Markdown
-                    | LanguageType::Text
-            )
-        })
-        .map(|(_, stats)| stats.code)
-        .sum();
+    let total_lines: usize = language_stats.values().map(|stats| stats.code).sum();
 
-    let mut sorted_langs: Vec<(&LanguageType, &CodeStats)> = language_stats
-        .iter()
-        .filter(|(lang, _)| {
-            !matches!(
-                lang,
-                LanguageType::Toml
-                    | LanguageType::Xml
-                    | LanguageType::Json
-                    | LanguageType::Yaml
-                    | LanguageType::Markdown
-                    | LanguageType::Text
-            )
-        })
-        .collect();
-
+    let mut sorted_langs: Vec<(&LanguageType, &CodeStats)> = language_stats.iter().collect();
     sorted_langs.sort_by(|a, b| b.1.code.cmp(&a.1.code));
+
     Ok(RepoStats {
         id,
         branch: branch.to_string(),

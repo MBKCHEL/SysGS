@@ -7,6 +7,7 @@ pub fn get_logo(lang: &str) -> (Vec<ColoredString>, usize, fn(&str) -> ColoredSt
         "rust" => (include_str!("../assets/rust.txt"), |s| s.white().bold()),
         "c" => (include_str!("../assets/c.txt"), |s| s.blue().bold()),
         "c++" | "cpp" => (include_str!("../assets/cpp.txt"), |s| s.blue().bold()),
+        "typescript" | "ts" => (include_str!("../assets/typescript.txt"), |s| s.blue().bold()),
         "python" => (include_str!("../assets/python.txt"), |s| s.yellow().bold()),
         "javascript" | "js" => (include_str!("../assets/javascript.txt"), |s| s.yellow().bold()),
         _ => (include_str!("../assets/default.txt"), |s| s.white().bold()),
