@@ -1,6 +1,7 @@
 use git2::{ObjectType, TreeWalkMode, TreeWalkResult};
 use std::collections::HashMap;
 use tokei::{CodeStats, Config, LanguageType};
+use crate::info;
 
 pub struct RepoStats {
     pub id: String,
@@ -120,7 +121,7 @@ pub fn get_info(repo: &git2::Repository) -> Result<RepoStats, git2::Error> {
         let hours = diff_sec / 3600;
         let days = diff_sec / 86400;
 
-        if diff_sec < 120 {
+        if diff_sec < 60 {
             "just now".to_string()
         }else if minutes < 60 {
             format!("{} minutes ago", minutes)
