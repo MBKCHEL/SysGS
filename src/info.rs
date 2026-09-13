@@ -12,7 +12,8 @@ pub struct RepoStats {
     pub total_commits: i32,
     pub summary: String,
     pub repo_name: String,
-    pub age: String,
+    pub age_old: String,
+    pub last_change: String,
     pub text_files_count: usize,
     pub md_files_count: usize,
 }
@@ -59,11 +60,18 @@ pub fn get_info(repo: &git2::Repository) -> Result<RepoStats, git2::Error> {
     let mut author_counts: HashMap<String, usize> = HashMap::new();
     let mut total_commits = 0;
     let mut first_commit_time: Option<i64> = None;
+    let mut last_commit_time: Option<i64> = None;
 
     for oid in revwalk.flatten() {
         total_commits += 1;
         if let Ok(c) = repo.find_commit(oid) {
-            first_commit_time = Some(c.time().seconds());
+            let time = c.time().seconds();
+
+            if last_commit_time.is_none() {
+                last_commit_time = Some(time);
+            }
+
+            first_commit_time = Some(time);
 
             let author = c.author();
             if let Ok(name) = author.name() {
@@ -72,7 +80,7 @@ pub fn get_info(repo: &git2::Repository) -> Result<RepoStats, git2::Error> {
         }
     }
 
-    let age = if let Some(first_time) = first_commit_time {
+    let age_old = if let Some(first_time) = first_commit_time {
         let now = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap_or_default()
@@ -95,6 +103,43 @@ pub fn get_info(repo: &git2::Repository) -> Result<RepoStats, git2::Error> {
                 format!("{} years, {} months", years, remaining_months)
             } else {
                 format!("{} years", years)
+            }
+        }
+    } else {
+        "unknown".to_string()
+    };
+
+    let last_change = if let Some(last_commit_time) = last_commit_time {
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_secs() as i64;
+
+        let diff_sec = now - last_commit_time;
+        let minutes = diff_sec / 60;
+        let hours = diff_sec / 3600;
+        let days = diff_sec / 86400;
+
+        if diff_sec < 120 {
+            "just now".to_string()
+        }else if minutes < 60 {
+            format!("{} minutes ago", minutes)
+        }
+        else if hours < 24 {
+            format!("{} hours ago", hours)
+        }
+        else if days < 30 {
+            format!("{} days ago", days)
+        } else if days < 365 {
+            let months = days / 30;
+            format!("{} months ago", months)
+        } else {
+            let years = days / 365;
+            let remaining_months = (days % 365) / 30;
+            if remaining_months > 0 {
+                format!("{} years, {} months ago", years, remaining_months)
+            } else {
+                format!("{} years ago", years)
             }
         }
     } else {
@@ -184,7 +229,8 @@ pub fn get_info(repo: &git2::Repository) -> Result<RepoStats, git2::Error> {
             .map(|(lang, stats)| (format!("{:?}", lang), stats.code))
             .collect(),
         summary: summary.to_string(),
-        age,
+        age_old,
+        last_change,
         text_files_count,
         md_files_count,
     })

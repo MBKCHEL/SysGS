@@ -87,7 +87,8 @@ fn main() -> Result<(), git2::Error> {
 
     let _ = writeln!(buffer, "{}: {}", key("Total commits"), stats.total_commits);
     let _ = writeln!(buffer, "{}: {}", key("Last commit"), stats.summary);
-    let _ = writeln!(buffer, "{}: {}", key("Repo age"), stats.age);
+    let _ = writeln!(buffer, "{}: {}", key("Repo age"), stats.age_old);
+    let _ = writeln!(buffer, "{}: {}", key("Last changes"), stats.last_change);
 
     printer::render(top_lang, &buffer);
 
