@@ -26,6 +26,7 @@ fn is_ignored_language(lang: &LanguageType) -> bool {
             | LanguageType::Yaml
             | LanguageType::Markdown
             | LanguageType::Text
+            |LanguageType::Css
     )
 }
 
@@ -168,7 +169,7 @@ pub fn get_info(repo: &git2::Repository) -> Result<RepoStats, git2::Error> {
     let total_lines: usize = language_stats.values().map(|stats| stats.code).sum();
 
     let mut sorted_langs: Vec<(&LanguageType, &CodeStats)> = language_stats.iter().collect();
-    sorted_langs.sort_by(|a, b| b.1.code.cmp(&b.1.code));
+    sorted_langs.sort_by(|a, b| b.1.code.cmp(&a.1.code));
 
     Ok(RepoStats {
         id,

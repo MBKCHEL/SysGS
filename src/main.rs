@@ -10,6 +10,7 @@ fn get_lang_color(lang: &str) -> Box<dyn Fn(&str) -> ColoredString> {
     match lang.to_lowercase().as_str() {
         "rust" | "rs" => Box::new(|s| s.white()),
         "zsh" => Box::new(|s| s.white()),
+        "md" | "markdown" => Box::new(|s| s.white()),
         "bash" => Box::new(|s| s.white()),
         "python" | "py" => Box::new(|s| s.blue()),
         "c" => Box::new(|s| s.blue()),
@@ -39,12 +40,13 @@ fn main() -> Result<(), git2::Error> {
 
     let stats = info::get_info(&repo)?;
 
-    let top_lang = stats
-        .sorted_langs
-        .first()
-        .map(|(lang, _)| lang.as_str())
-        .unwrap_or("unknown");
-
+    let top_lang = if let Some((lang, _)) = stats.sorted_langs.first() {
+        lang.as_str()
+    } else if stats.md_files_count > 0 {
+        "Markdown"
+    } else {
+        "unknown"
+    };
     let color_func = get_lang_color(top_lang);
 
     let key = |name: &str| color_func(name).bold();
@@ -59,22 +61,29 @@ fn main() -> Result<(), git2::Error> {
     let _ = writeln!(buffer, "{}: {}", key("Txt files"), stats.text_files_count);
     let _ = writeln!(buffer, "{}: {}", key("Lines of code"), stats.total_code_lines);
 
-    let _ = write!(buffer, "{}: ", key("Languages"));
-    let mut first = true;
-    for (lang, lang_code_lines) in &stats.sorted_langs {
-        let percentage: f64 = if stats.total_code_lines > 0 {
-            (*lang_code_lines as f64 / stats.total_code_lines as f64) * 100.0
-        } else {
-            0.0
-        };
+    if (stats.sorted_langs.len() == 1 && stats.sorted_langs[0].0 == "Markdown")
+        || (stats.sorted_langs.is_empty() && stats.md_files_count > 0) {
+        let _ = writeln!(buffer, "{}: Markdown (100.0%)", key("Languages"));
+    } else if stats.sorted_langs.is_empty() {
+        let _ = writeln!(buffer, "{}: None", key("Languages"));
+    } else {
+        let _ = write!(buffer, "{}: ", key("Languages"));
+        let mut first = true;
+        for (lang, lang_code_lines) in &stats.sorted_langs {
+            let percentage: f64 = if stats.total_code_lines > 0 {
+                (*lang_code_lines as f64 / stats.total_code_lines as f64) * 100.0
+            } else {
+                0.0
+            };
 
-        if !first {
-            let _ = write!(buffer, ", ");
+            if !first {
+                let _ = write!(buffer, ", ");
+            }
+            let _ = write!(buffer, "{} ({:.1}%)", lang, percentage);
+            first = false;
         }
-        let _ = write!(buffer, "{} ({:.1}%)", lang, percentage);
-        first = false;
+        let _ = writeln!(buffer);
     }
-    let _ = writeln!(buffer);
 
     let _ = writeln!(buffer, "{}: {}", key("Total commits"), stats.total_commits);
     let _ = writeln!(buffer, "{}: {}", key("Last commit"), stats.summary);

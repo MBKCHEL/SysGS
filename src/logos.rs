@@ -7,6 +7,7 @@ pub fn get_logo(lang: &str) -> (Vec<ColoredString>, usize, Box<dyn Fn(&str) -> C
         "rust" => (include_str!("../assets/rust.txt"), Box::new(|s| s.white().bold())),
         "zsh" => (include_str!("../assets/zsh.txt"), Box::new(|s| s.white().bold())),
         "bash" => (include_str!("../assets/bash.txt"), Box::new(|s| s.white().bold())),
+        "markdown" | "md" => (include_str!("../assets/markdown.txt"), Box::new(|s| s.white().bold())),
         "c" => (include_str!("../assets/c.txt"), Box::new(|s| s.blue().bold())),
         "go" | "golang" => (include_str!("../assets/go.txt"), Box::new(|s| s.blue().bold())),
         "c++" | "cpp" => (include_str!("../assets/cpp.txt"), Box::new(|s| s.blue().bold())),
