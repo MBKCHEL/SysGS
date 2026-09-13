@@ -13,6 +13,8 @@ pub struct RepoStats {
     pub summary: String,
     pub repo_name: String,
     pub age: String,
+    pub text_files_count: usize,
+    pub md_files_count: usize,
 }
 
 fn is_ignored_language(lang: &LanguageType) -> bool {
@@ -51,6 +53,8 @@ pub fn get_info(repo: &git2::Repository) -> Result<RepoStats, git2::Error> {
     let config = Config::default();
 
     let mut total_files = 0;
+    let mut text_files_count = 0;
+    let mut md_files_count = 0;
     let mut author_counts: HashMap<String, usize> = HashMap::new();
     let mut total_commits = 0;
     let mut first_commit_time: Option<i64> = None;
@@ -66,7 +70,7 @@ pub fn get_info(repo: &git2::Repository) -> Result<RepoStats, git2::Error> {
             }
         }
     }
-    
+
     let age = if let Some(first_time) = first_commit_time {
         let now = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
@@ -112,6 +116,15 @@ pub fn get_info(repo: &git2::Repository) -> Result<RepoStats, git2::Error> {
         if entry.kind() == Some(ObjectType::Blob) {
             if let Ok(name) = std::str::from_utf8(entry.name_bytes()) {
                 let full_path = std::path::Path::new(root).join(name);
+
+                if let Some(ext) = full_path.extension().and_then(|e| e.to_str()) {
+                    match ext.to_lowercase().as_str() {
+                        "txt" => text_files_count += 1,
+                        "md" => md_files_count += 1,
+                        _ => {}
+                    }
+                }
+
                 if let Some(raw_lang_type) = LanguageType::from_path(&full_path, &config) {
                     let lang_type = normalize_language_type(raw_lang_type);
 
@@ -155,7 +168,7 @@ pub fn get_info(repo: &git2::Repository) -> Result<RepoStats, git2::Error> {
     let total_lines: usize = language_stats.values().map(|stats| stats.code).sum();
 
     let mut sorted_langs: Vec<(&LanguageType, &CodeStats)> = language_stats.iter().collect();
-    sorted_langs.sort_by(|a, b| b.1.code.cmp(&a.1.code));
+    sorted_langs.sort_by(|a, b| b.1.code.cmp(&b.1.code));
 
     Ok(RepoStats {
         id,
@@ -171,5 +184,7 @@ pub fn get_info(repo: &git2::Repository) -> Result<RepoStats, git2::Error> {
             .collect(),
         summary: summary.to_string(),
         age,
+        text_files_count,
+        md_files_count,
     })
 }
