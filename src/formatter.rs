@@ -1,13 +1,13 @@
+use crate::printer;
 use colored::Colorize;
 use colored::*;
 use std::fmt::Write;
-use crate::printer;
-
 
 fn get_lang_color(lang: &str) -> fn(&str) -> ColoredString {
     match lang.to_lowercase().as_str() {
         "rust" | "rs" => |s: &str| s.white(),
         "zsh" => |s| s.white(),
+        "lua" => |s| s.blue(),
         "md" | "markdown" => |s| s.white(),
         "bash" => |s| s.white(),
         "python" | "py" => |s| s.blue(),
@@ -38,12 +38,23 @@ pub fn printer(stats: &crate::info::RepoStats, top_lang: &str) {
     let _ = writeln!(buffer, "{}: {}", key("Repository name"), stats.repo_name);
     let _ = writeln!(buffer, "{}: {}", key("Authors"), stats.authors_str);
     let _ = writeln!(buffer, "{}: {}", key("Files"), stats.total_files);
-    let _ = writeln!(buffer, "{}: {}", key("Markdown files"), stats.md_files_count);
+    let _ = writeln!(
+        buffer,
+        "{}: {}",
+        key("Markdown files"),
+        stats.md_files_count
+    );
     let _ = writeln!(buffer, "{}: {}", key("Txt files"), stats.text_files_count);
-    let _ = writeln!(buffer, "{}: {}", key("Lines of code"), stats.total_code_lines);
+    let _ = writeln!(
+        buffer,
+        "{}: {}",
+        key("Lines of code"),
+        stats.total_code_lines
+    );
 
     if (stats.sorted_langs.len() == 1 && stats.sorted_langs[0].0 == "Markdown")
-        || (stats.sorted_langs.is_empty() && stats.md_files_count > 0) {
+        || (stats.sorted_langs.is_empty() && stats.md_files_count > 0)
+    {
         let _ = writeln!(buffer, "{}: Markdown (100.0%)", key("Languages"));
     } else if stats.sorted_langs.is_empty() {
         let _ = writeln!(buffer, "{}: None", key("Languages"));
@@ -73,3 +84,4 @@ pub fn printer(stats: &crate::info::RepoStats, top_lang: &str) {
 
     printer::render(top_lang, &buffer);
 }
+
