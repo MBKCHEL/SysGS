@@ -75,11 +75,21 @@ pub fn get_logo(lang: &str) -> (Vec<ColoredString>, usize) {
         ),
         "c#" | "csharp" => (
             include_str!("../assets/csharp.txt"),
-            LogoStyle::Solid(Color::Blue),
+            LogoStyle::Solid(Color::TrueColor {
+                r: 0x68,
+                g: 0x21,
+                b: 0x7A,
+            }), //Фиолетовый цвет ведь
+                //в enum его нет
         ),
         "php" => (
             include_str!("../assets/php.txt"),
-            LogoStyle::Solid(Color::Blue),
+            LogoStyle::Solid(Color::TrueColor {
+                r: 0x77,
+                g: 0x7B,
+                b: 0xB4,
+            }), // Тоже самое но
+                // немного другой
         ),
         "java" => (
             include_str!("../assets/java.txt"),
