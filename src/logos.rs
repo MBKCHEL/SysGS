@@ -59,6 +59,10 @@ pub fn get_logo(
                 include_str!("../assets/java.txt"),
                 Box::new(|s| s.red().bold()),
             ),
+            "swift" | "swiftleng" => (
+                include_str!("../assets/swift.txt"),
+                Box::new(|s| s.red().bold()),
+            ),
             "ruby" => (
                 include_str!("../assets/ruby.txt"),
                 Box::new(|s| s.red().bold()),

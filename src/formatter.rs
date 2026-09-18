@@ -7,6 +7,7 @@ fn get_lang_color(lang: &str) -> fn(&str) -> ColoredString {
     match lang.to_lowercase().as_str() {
         "rust" | "rs" => |s: &str| s.white(),
         "zsh" => |s| s.white(),
+        "swift" | "swiftlang" => |s: &str| s.red(),
         "lua" => |s| s.blue(),
         "md" | "markdown" => |s| s.white(),
         "bash" => |s| s.white(),
