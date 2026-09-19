@@ -1,12 +1,16 @@
-use std::io::{self, BufWriter, Write};
 use crate::logos;
+use std::io::{self, BufWriter, Write};
 
 pub fn render(top_lang: &str, info_buffer: &str) {
-    let (logo, logo_padding, _) = logos::get_logo(top_lang);
+    let (logo, logo_padding) = logos::get_logo(top_lang);
 
     let raw_lens: Vec<usize> = logo
         .iter()
-        .map(|line| strip_ansi_escapes::strip_str(&line.to_string()).chars().count())
+        .map(|line| {
+            strip_ansi_escapes::strip_str(&line.to_string())
+                .chars()
+                .count()
+        })
         .collect();
 
     let stdout = io::stdout();
