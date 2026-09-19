@@ -1,10 +1,10 @@
+mod formatter;
 mod info;
 mod logos;
 mod printer;
-mod formatter;
 
-use git2::Repository;
 use crate::info::get_info;
+use git2::Repository;
 
 fn main() -> Result<(), git2::Error> {
     let repo = match Repository::open_from_env() {
@@ -23,7 +23,6 @@ fn main() -> Result<(), git2::Error> {
     } else {
         "unknown"
     };
-
     formatter::printer(&stats, top_lang);
     Ok(())
 }

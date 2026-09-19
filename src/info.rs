@@ -1,7 +1,6 @@
 use git2::{ObjectType, TreeWalkMode, TreeWalkResult};
 use std::collections::HashMap;
 use tokei::{CodeStats, Config, LanguageType};
-use crate::info;
 
 pub struct RepoStats {
     pub id: String,
@@ -28,7 +27,7 @@ fn is_ignored_language(lang: &LanguageType) -> bool {
             | LanguageType::Yaml
             | LanguageType::Markdown
             | LanguageType::Text
-            |LanguageType::Css
+            | LanguageType::Css
     )
 }
 
@@ -123,13 +122,11 @@ pub fn get_info(repo: &git2::Repository) -> Result<RepoStats, git2::Error> {
 
         if diff_sec < 60 {
             "just now".to_string()
-        }else if minutes < 60 {
+        } else if minutes < 60 {
             format!("{} minutes ago", minutes)
-        }
-        else if hours < 24 {
+        } else if hours < 24 {
             format!("{} hours ago", hours)
-        }
-        else if days < 30 {
+        } else if days < 30 {
             format!("{} days ago", days)
         } else if days < 365 {
             let months = days / 30;
@@ -160,37 +157,33 @@ pub fn get_info(repo: &git2::Repository) -> Result<RepoStats, git2::Error> {
     let mut language_stats: HashMap<LanguageType, CodeStats> = HashMap::new();
 
     head_tree.walk(TreeWalkMode::PreOrder, |root, entry| {
-        if entry.kind() == Some(ObjectType::Blob) {
-            if let Ok(name) = std::str::from_utf8(entry.name_bytes()) {
-                let full_path = std::path::Path::new(root).join(name);
+        if entry.kind() == Some(ObjectType::Blob)
+            && let Ok(name) = std::str::from_utf8(entry.name_bytes())
+        {
+            let full_path = std::path::Path::new(root).join(name);
 
-                if let Some(ext) = full_path.extension().and_then(|e| e.to_str()) {
-                    match ext.to_lowercase().as_str() {
-                        "txt" => text_files_count += 1,
-                        "md" => md_files_count += 1,
-                        _ => {}
-                    }
+            if let Some(ext) = full_path.extension().and_then(|e| e.to_str()) {
+                match ext.to_lowercase().as_str() {
+                    "txt" => text_files_count += 1,
+                    "md" => md_files_count += 1,
+                    _ => {}
                 }
+            }
 
-                if let Some(raw_lang_type) = LanguageType::from_path(&full_path, &config) {
-                    let lang_type = normalize_language_type(raw_lang_type);
+            if let Some(raw_lang_type) = LanguageType::from_path(&full_path, &config) {
+                let lang_type = normalize_language_type(raw_lang_type);
 
-                    if !is_ignored_language(&lang_type) {
-                        if let Ok(object) = entry.to_object(&repo) {
-                            if let Some(blob) = object.as_blob() {
-                                if !blob.is_binary() {
-                                    let stats = lang_type.parse_from_slice(blob.content(), &config);
+                if !is_ignored_language(&lang_type)
+                    && let Ok(object) = entry.to_object(repo)
+                    && let Some(blob) = object.as_blob()
+                    && !blob.is_binary()
+                {
+                    let stats = lang_type.parse_from_slice(blob.content(), &config);
 
-                                    total_files += 1;
+                    total_files += 1;
 
-                                    let lang_stats = language_stats
-                                        .entry(lang_type)
-                                        .or_insert_with(CodeStats::new);
-                                    *lang_stats += stats;
-                                }
-                            }
-                        }
-                    }
+                    let lang_stats = language_stats.entry(lang_type).or_default();
+                    *lang_stats += stats;
                 }
             }
         }
@@ -198,7 +191,7 @@ pub fn get_info(repo: &git2::Repository) -> Result<RepoStats, git2::Error> {
     })?;
 
     let mut sorted_authors: Vec<(String, usize)> = author_counts.into_iter().collect();
-    sorted_authors.sort_by(|a, b| b.1.cmp(&a.1));
+    sorted_authors.sort_by_key(|a| std::cmp::Reverse(a.1));
 
     let top_names: Vec<String> = sorted_authors
         .iter()
@@ -215,7 +208,7 @@ pub fn get_info(repo: &git2::Repository) -> Result<RepoStats, git2::Error> {
     let total_lines: usize = language_stats.values().map(|stats| stats.code).sum();
 
     let mut sorted_langs: Vec<(&LanguageType, &CodeStats)> = language_stats.iter().collect();
-    sorted_langs.sort_by(|a, b| b.1.code.cmp(&a.1.code));
+    sorted_langs.sort_by_key(|a| std::cmp::Reverse(a.1.code));
 
     Ok(RepoStats {
         id,

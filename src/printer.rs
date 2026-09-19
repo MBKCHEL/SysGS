@@ -7,7 +7,7 @@ pub fn render(top_lang: &str, info_buffer: &str) {
     let raw_lens: Vec<usize> = logo
         .iter()
         .map(|line| {
-            strip_ansi_escapes::strip_str(&line.to_string())
+            strip_ansi_escapes::strip_str(line.to_string())
                 .chars()
                 .count()
         })
