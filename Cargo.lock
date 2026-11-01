@@ -1241,6 +1241,7 @@ dependencies = [
  "git2",
  "strip-ansi-escapes",
  "tokei",
+ "walkdir",
 ]
 
 [[package]]

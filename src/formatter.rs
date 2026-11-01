@@ -17,6 +17,7 @@ fn get_lang_color(lang: &str) -> fn(&str) -> ColoredString {
         "php" => |s| s.purple(),
         "asm" | "assembly" | "assemblygas" => |s| s.magenta(),
         "c#" | "csharp" => |s| s.magenta(),
+        "elixir" | "ex" | "exs" => |s| s.magenta(),
         "java" => |s| s.red(),
         "ruby" => |s| s.red(),
         "cpp" | "c++" | "cheader" | "cppheader" => |s| s.blue(),
@@ -82,6 +83,7 @@ pub fn printer(stats: &crate::info::RepoStats, top_lang: &str) {
     let _ = writeln!(buffer, "{}: {}", key("Last commit"), stats.summary);
     let _ = writeln!(buffer, "{}: {}", key("Repo age"), stats.age_old);
     let _ = writeln!(buffer, "{}: {}", key("Last changes"), stats.last_change);
+    let _ = writeln!(buffer, "{}: {}", key("Project size"), stats.project_size);
 
     printer::render(top_lang, &buffer);
 }

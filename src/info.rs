@@ -1,6 +1,7 @@
 use git2::{ObjectType, TreeWalkMode, TreeWalkResult};
 use std::collections::HashMap;
 use tokei::{CodeStats, Config, LanguageType};
+use walkdir::WalkDir;
 
 pub struct RepoStats {
     pub id: String,
@@ -16,6 +17,7 @@ pub struct RepoStats {
     pub last_change: String,
     pub text_files_count: usize,
     pub md_files_count: usize,
+    pub project_size: String,
 }
 
 fn is_ignored_language(lang: &LanguageType) -> bool {
@@ -77,6 +79,45 @@ pub fn get_info(repo: &git2::Repository) -> Result<RepoStats, git2::Error> {
             if let Ok(name) = author.name() {
                 *author_counts.entry(name.to_string()).or_insert(0) += 1;
             }
+        }
+    }
+
+    pub fn get_project_size(repo: &git2::Repository) -> String {
+        let workdir = match repo.workdir() {
+            Some(dir) => dir,
+            None => return "0 B".to_string(),
+        };
+
+        let walker = WalkDir::new(workdir).into_iter().filter_entry(|entry| {
+            if entry.file_type().is_dir() {
+                if let Some(name) = entry.file_name().to_str() {
+                    return name != "target" && name != ".git" && name != ".idea";
+                }
+            }
+            true
+        });
+
+        let mut total_size = 0;
+        for entry in walker.flatten() {
+            if entry.file_type().is_file() {
+                if let Ok(metadata) = entry.metadata() {
+                    total_size += metadata.len();
+                }
+            }
+        }
+
+        const KB: u64 = 1024;
+        const MB: u64 = KB * 1024;
+        const GB: u64 = MB * 1024;
+
+        if total_size >= GB {
+            format!("{:.2} GB", total_size as f64 / GB as f64)
+        } else if total_size >= MB {
+            format!("{:.2} MB", total_size as f64 / MB as f64)
+        } else if total_size >= KB {
+            format!("{:.2} KB", total_size as f64 / KB as f64)
+        } else {
+            format!("{} B", total_size)
         }
     }
 
@@ -227,5 +268,6 @@ pub fn get_info(repo: &git2::Repository) -> Result<RepoStats, git2::Error> {
         last_change,
         text_files_count,
         md_files_count,
+        project_size: get_project_size(repo),
     })
 }

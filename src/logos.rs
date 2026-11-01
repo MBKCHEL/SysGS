@@ -89,6 +89,14 @@ pub fn get_logo(lang: &str) -> (Vec<ColoredString>, usize) {
                 b: 0xB4,
             }),
         ),
+        "elixir" | "ex" | "exs" => (
+            include_str!("../assets/elixir.txt"),
+            LogoStyle::Solid(Color::TrueColor {
+                r: 0x68,
+                g: 0x21,
+                b: 0x7A,
+            }),
+            ),
         "java" => (
             include_str!("../assets/java.txt"),
             LogoStyle::Solid(Color::Red),
