@@ -1,4 +1,4 @@
-use git2::{ObjectType, TreeWalkMode, TreeWalkResult};
+use git2::{Mailmap, ObjectType, Signature, TreeWalkMode, TreeWalkResult};
 use std::collections::HashMap;
 use tokei::{CodeStats, Config, LanguageType};
 use walkdir::WalkDir;
@@ -41,6 +41,53 @@ fn normalize_language_type(lang: LanguageType) -> LanguageType {
     }
 }
 
+fn get_repo_name(repo: &git2::Repository) -> Option<String> {
+    repo.path()
+        .parent()
+        .and_then(|p| p.file_name())
+        .and_then(|os_str| os_str.to_str())
+        .map(|s| s.to_string())
+}
+
+pub fn get_project_size(repo: &git2::Repository) -> String {
+    let workdir = match repo.workdir() {
+        Some(dir) => dir,
+        None => return "0 B".to_string(),
+    };
+
+    let walker = WalkDir::new(workdir).into_iter().filter_entry(|entry| {
+        if entry.file_type().is_dir() {
+            if let Some(name) = entry.file_name().to_str() {
+                return name != "target" && name != ".git" && name != ".idea";
+            }
+        }
+        true
+    });
+
+    let mut total_size = 0;
+    for entry in walker.flatten() {
+        if entry.file_type().is_file() {
+            if let Ok(metadata) = entry.metadata() {
+                total_size += metadata.len();
+            }
+        }
+    }
+
+    const KB: u64 = 1024;
+    const MB: u64 = KB * 1024;
+    const GB: u64 = MB * 1024;
+
+    if total_size >= GB {
+        format!("{:.2} GB", total_size as f64 / GB as f64)
+    } else if total_size >= MB {
+        format!("{:.2} MB", total_size as f64 / MB as f64)
+    } else if total_size >= KB {
+        format!("{:.2} KB", total_size as f64 / KB as f64)
+    } else {
+        format!("{} B", total_size)
+    }
+}
+
 pub fn get_info(repo: &git2::Repository) -> Result<RepoStats, git2::Error> {
     let head = repo.head()?;
     let head_tree = head.peel_to_tree()?;
@@ -63,6 +110,7 @@ pub fn get_info(repo: &git2::Repository) -> Result<RepoStats, git2::Error> {
     let mut total_commits = 0;
     let mut first_commit_time: Option<i64> = None;
     let mut last_commit_time: Option<i64> = None;
+    let mailmap = repo.mailmap().unwrap_or_else(|_| Mailmap::new().unwrap());
 
     for oid in revwalk.flatten() {
         total_commits += 1;
@@ -75,49 +123,14 @@ pub fn get_info(repo: &git2::Repository) -> Result<RepoStats, git2::Error> {
 
             first_commit_time = Some(time);
 
-            let author = c.author();
-            if let Ok(name) = author.name() {
+            let author: Signature = c.author();
+            let resolved = mailmap
+                .resolve_signature(&author)
+                .unwrap_or_else(|_| author.to_owned());
+
+            if let Ok(name) = resolved.name() {
                 *author_counts.entry(name.to_string()).or_insert(0) += 1;
             }
-        }
-    }
-
-    pub fn get_project_size(repo: &git2::Repository) -> String {
-        let workdir = match repo.workdir() {
-            Some(dir) => dir,
-            None => return "0 B".to_string(),
-        };
-
-        let walker = WalkDir::new(workdir).into_iter().filter_entry(|entry| {
-            if entry.file_type().is_dir() {
-                if let Some(name) = entry.file_name().to_str() {
-                    return name != "target" && name != ".git" && name != ".idea";
-                }
-            }
-            true
-        });
-
-        let mut total_size = 0;
-        for entry in walker.flatten() {
-            if entry.file_type().is_file() {
-                if let Ok(metadata) = entry.metadata() {
-                    total_size += metadata.len();
-                }
-            }
-        }
-
-        const KB: u64 = 1024;
-        const MB: u64 = KB * 1024;
-        const GB: u64 = MB * 1024;
-
-        if total_size >= GB {
-            format!("{:.2} GB", total_size as f64 / GB as f64)
-        } else if total_size >= MB {
-            format!("{:.2} MB", total_size as f64 / MB as f64)
-        } else if total_size >= KB {
-            format!("{:.2} KB", total_size as f64 / KB as f64)
-        } else {
-            format!("{} B", total_size)
         }
     }
 
@@ -184,14 +197,6 @@ pub fn get_info(repo: &git2::Repository) -> Result<RepoStats, git2::Error> {
     } else {
         "unknown".to_string()
     };
-
-    fn get_repo_name(repo: &git2::Repository) -> Option<String> {
-        repo.path()
-            .parent()
-            .and_then(|p| p.file_name())
-            .and_then(|os_str| os_str.to_str())
-            .map(|s| s.to_string())
-    }
 
     let repo_name = get_repo_name(repo).unwrap_or_else(|| "Unknown Repo".to_string());
 
